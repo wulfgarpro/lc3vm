@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.29)
 
-project(vm LANGUAGES C)
+project(l3cvm LANGUAGES C)
 
-add_executable(vm main.c)
+add_executable(l3cvm main.c)

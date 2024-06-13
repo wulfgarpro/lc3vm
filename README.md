@@ -1,10 +1,12 @@
-# L3CVM
+# l3cvm
 
 A simple LC-3 VM.
 
 ## Requirements
 
-CMake >= 3.29 with Ninja.
+- A C compiler.
+- CMake >= 3.29.
+- A CMake generator, e.g. Make, Ninja, etc.
 
 ## Build & Run
 

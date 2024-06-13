@@ -3,6 +3,11 @@
 // See: https://en.wikipedia.org/wiki/Little_Computer_3.
 
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#define TRUE 1
+#define FALSE 0
 
 // LC-3 is 16-bit addressable, with 65536 memory locations, addressing a total
 // of 16*2^16 = 128KB of data.
@@ -64,4 +69,62 @@ uint16_t memory[MEMORY_MAX];
 // Register storage
 uint16_t reg[R_COUNT];
 
-int main(int argc, char *argv[]) { return 0; }
+uint16_t mem_read(uint16_t addr) { return 0; }
+
+int main(int argc, char *argv[]) {
+  if (argc < 2) {
+    printf("l3cvm [program] ..\n");
+    exit(2);
+  }
+
+  // TODO: Read image file into memory.
+
+  reg[R_COND] = FL_ZRO; // Default start condition flag.
+  reg[R_PC] = 0x3000;   // Default start program counter address.
+
+  int running = TRUE;
+  while (running) {
+    uint16_t instr = mem_read(reg[R_PC]++);
+    uint16_t op =
+        instr >> 12; // Right shift 12 to read the first 4 bits, the opcode.
+
+    switch (op) {
+    case OP_BR:
+      break;
+    case OP_ADD:
+      break;
+    case OP_LD:
+      break;
+    case OP_ST:
+      break;
+    case OP_JSR:
+      break;
+    case OP_AND:
+      break;
+    case OP_LDR:
+      break;
+    case OP_STR:
+      break;
+    case OP_NOT:
+      break;
+    case OP_LDI:
+      break;
+    case OP_STI:
+      break;
+    case OP_JMP:
+      break;
+    case OP_LEA:
+      break;
+    case OP_TRAP:
+      break;
+    // UNUSED
+    case OP_RTI:
+    case OP_RES:
+    default:
+      // Invalid opcode.
+      break;
+    }
+  }
+
+  return 0;
+}

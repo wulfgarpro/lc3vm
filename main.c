@@ -71,13 +71,54 @@ uint16_t reg[R_COUNT];
 
 uint16_t mem_read(uint16_t addr) { return 0; }
 
+void update_flags(uint16_t r) {
+  if (reg[r] == 0) {
+    reg[R_COND] = FL_ZRO;
+  } else if (reg[r] >> 15) { // If high bit is 1, the result is negative.
+    reg[R_COND] = FL_NEG;
+  } else {
+    reg[R_COND] = FL_POS;
+  }
+}
+
+// Sign extend a negative number to 16 bits.
+uint16_t sign_extend(uint16_t x, int bit_count) {
+  if ((x >> (bit_count - 1)) & 1) { // If the high bit, up to bit_count, is 1,
+                                    // the number is a negative number and must
+                                    // be treated as such during sign extension.
+    x |= (0xFFFF << bit_count);     // Sign extend, setting high bits to 1
+                                    // for negative.
+  }
+  return x;
+}
+
+// ADD DR, SR1, SR2
+// ADD DR, SR1, imm5
+void op_add(uint16_t instr) {
+  uint16_t dr = (instr >> 9) & 0x7;       // The dest register is bits 11-9 (3).
+  uint16_t sr1 = (instr >> 6) & 0x7;      // The src register is bits 8-6 (3).
+  uint16_t imm_mode = (instr >> 5) & 0x1; // imm mode flag is bit 5 (1).
+
+  if (imm_mode) {
+    // If imm mode is set, sr2 is obtained by sign-extending imm5 (5) to 16
+    // bits.
+    uint16_t imm5 = sign_extend(instr & /*0b0000000000011111=*/0x1F, 5);
+    reg[dr] = reg[sr1] + imm5;
+  } else {
+    uint16_t sr2 = instr & 0x7;
+    reg[dr] = reg[sr1] + reg[sr2];
+  }
+
+  update_flags(dr);
+}
+
 int main(int argc, char *argv[]) {
   if (argc < 2) {
-    printf("l3cvm [program] ..\n");
+    printf("vm [program] ..\n");
     exit(2);
   }
 
-  // TODO: Read image file into memory.
+  // TODO: Load program into memory.
 
   reg[R_COND] = FL_ZRO; // Default start condition flag.
   reg[R_PC] = 0x3000;   // Default start program counter address.
@@ -85,13 +126,13 @@ int main(int argc, char *argv[]) {
   int running = TRUE;
   while (running) {
     uint16_t instr = mem_read(reg[R_PC]++);
-    uint16_t op =
-        instr >> 12; // Right shift 12 to read the first 4 bits, the opcode.
+    uint16_t op = instr >> 12; // The opcode is bits 15-12 (4).
 
     switch (op) {
     case OP_BR:
       break;
     case OP_ADD:
+      op_add(instr);
       break;
     case OP_LD:
       break;

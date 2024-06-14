@@ -126,13 +126,49 @@ void op_ldi(uint16_t instr) {
   update_flags(dr);
 }
 
+uint16_t swap16(uint16_t x) {
+  // Swap low/high bytes.
+  return (x << 8) | (x >> 8);
+}
+
+void read_prog_file(FILE *file) {
+  uint16_t origin = 0;
+  // The first 16-bits of an L3-C program specifies the address in memory to
+  // load the program into.
+  fread(&origin, sizeof(origin), 1, file);
+  // L3-C programs are BE, so swap to LE for x86/x64.
+  origin = swap16(origin);
+
+  uint16_t max_read = MEMORY_MAX - origin;
+  uint16_t *start = memory + origin;
+  size_t read = fread(start, sizeof(uint16_t), max_read, file);
+
+  while (read-- > 0) {
+    start[read] = swap16(start[read]);
+  }
+}
+
+int read_prog(const char *filepath) {
+  FILE *prog = fopen(filepath, "rb");
+  if (!prog) {
+    return 0;
+  }
+
+  read_prog_file(prog);
+  fclose(prog);
+
+  return 1;
+}
 int main(int argc, char *argv[]) {
   if (argc < 2) {
-    printf("vm [program] ..\n");
+    printf("vm [program]...\n");
     exit(2);
   }
 
-  // TODO: Load program into memory.
+  if (!read_prog(argv[1])) {
+    printf("Failed to load program: %s\n", argv[1]);
+    exit(1);
+  }
 
   reg[R_COND] = FL_ZRO; // Default start condition flag.
   reg[R_PC] = 0x3000;   // Default start program counter address.

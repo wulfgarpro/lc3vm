@@ -1,4 +1,4 @@
-// l3cvm.c
+// main.c
 // A LC-3 (Little Computer) Virtual Machine (VM).
 // See: https://en.wikipedia.org/wiki/Little_Computer_3.
 

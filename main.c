@@ -1,4 +1,4 @@
-// vm.c
+// l3cvm.c
 // A LC-3 (Little Computer) Virtual Machine (VM).
 // See: https://en.wikipedia.org/wiki/Little_Computer_3.
 
@@ -100,14 +100,28 @@ void op_add(uint16_t instr) {
   uint16_t imm_mode = (instr >> 5) & 0x1; // imm mode flag is bit 5 (1).
 
   if (imm_mode) {
-    // If imm mode is set, sr2 is obtained by sign-extending imm5 (5) to 16
-    // bits.
-    uint16_t imm5 = sign_extend(instr & /*0b0000000000011111=*/0x1F, 5);
+    // If imm mode is set, sr2 is obtained by sign-extending imm5 (5) to
+    // 16-bits. The 0x1F mask retains the low 5 bits.
+    uint16_t imm5 = sign_extend(instr & 0x1F, 5);
     reg[dr] = reg[sr1] + imm5;
   } else {
     uint16_t sr2 = instr & 0x7;
     reg[dr] = reg[sr1] + reg[sr2];
   }
+
+  update_flags(dr);
+}
+
+// LDI DR, LABEL
+void op_ldi(uint16_t instr) {
+  uint16_t dr = (instr >> 9) & 0x7; // The dest register is bits 11-8 (3).
+  // pc_offset is obtained by sign-extending PCpffset9 (9). 0x1FF mask retains
+  // the low 9 bits.
+  uint16_t pc_offset = sign_extend(instr & 0x1FF, 9);
+
+  // Indirect address is computed by adding pc_offset to PC. The value in that
+  // memory address is the address of the data to be loaded into dest.
+  reg[dr] = mem_read(mem_read(reg[R_PC] + pc_offset));
 
   update_flags(dr);
 }
@@ -149,6 +163,7 @@ int main(int argc, char *argv[]) {
     case OP_NOT:
       break;
     case OP_LDI:
+      op_ldi(instr);
       break;
     case OP_STI:
       break;
